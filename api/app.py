@@ -2,6 +2,10 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {"message": "AI Platform API running 🚀"}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -10,7 +14,7 @@ def health():
 async def query():
     return {
         "ok": True,
-        "answer": "Received: hello",
+        "answer": "API working",
         "provider": "render",
         "citations": [],
         "route": {}
