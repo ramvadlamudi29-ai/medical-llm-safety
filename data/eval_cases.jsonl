@@ -1,0 +1,5 @@
+{"query": "What is the zero trust policy?", "must_contain": ["zero trust"], "expected_intent": "search"}
+{"query": "Summarize the incident response guide", "must_contain": ["incident"], "expected_intent": "summarize"}
+{"query": "Calculate 12 * 11", "must_contain": ["132"], "expected_intent": "calculator"}
+{"query": "What is 25% of 1800?", "must_contain": ["450"], "expected_intent": "calculator"}
+{"query": "Remote work policy days", "must_contain": ["remote"], "expected_intent": "search"}
