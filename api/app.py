@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from core.pipeline import run_pipeline
 
 app = FastAPI()
 
@@ -11,11 +12,9 @@ def health():
     return {"status": "ok"}
 
 @app.post("/query")
-async def query():
-    return {
-        "ok": True,
-        "answer": "API working",
-        "provider": "render",
-        "citations": [],
-        "route": {}
-    }
+async def query(body: dict):
+    query_text = body.get("query", "")
+
+    result = run_pipeline(query_text)
+
+    return result
