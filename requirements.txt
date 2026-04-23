@@ -4,6 +4,8 @@ pydantic-settings>=2.0
 httpx>=0.27
 uvicorn>=0.29
 pytest>=7.0
+requests>=2.31.0
+
 # Optional extras (pipeline runs without them):
 # streamlit>=1.30
 # sentence-transformers>=2.7
