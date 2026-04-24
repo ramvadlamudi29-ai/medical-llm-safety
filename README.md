@@ -1,263 +1,150 @@
-# AI Platform v4.1
+# 🤖 AI Platform v4.1 — RAG + LLM System
 
-A compact, **production-grade** retrieval-augmented AI service with hybrid
-search, agent routing, observability, evaluation, caching, cost tracking,
-structured output, security hardening, and an optional UI — all runnable
-fully offline.
+## 👨‍💻 About This Project
 
-> **Use case.** A self-contained "Ask your internal docs" service for small
-> teams: the API answers natural-language questions over a private corpus
-> of policies/runbooks, routes math questions to a safe calculator, and
-> exposes everything DevOps needs to ship it (metrics, eval, traces,
-> versioning, CI).
+I built this system to solve a real problem I faced while working with LLMs:
 
-## ✨ Features
+➡️ **Hallucination and unreliable answers**
 
-| Area | What you get |
-|------|--------------|
-| **Retrieval** | `HybridRAG` (BM25 + TF-IDF) with optional `CrossEncoderReranker` (graceful lexical fallback). |
-| **Routing** | `AgentRouter` dispatches to `calculator`, `summarize`, or `search`. |
-| **LLM layer** | `LLMClient` with **OpenAI → Ollama → LocalHeuristic** fallback chain (offline-safe). |
-| **Prompts** | Versioned templates in `core/prompts.py` (`search@v1`, `summarize@v1`, …). |
-| **Security** | PII detection/redaction (email, SSN, credit-card via Luhn), prompt-injection guard, control-char & length sanitization. |
-| **Observability** | Structured JSON logs, p50/p95/p99 latency histograms, **per-stage latency breakdown** (sanitize / security / route / retrieval / rerank / generation / total), per-request **trace IDs** (`X-Request-Id`). |
-| **Caching** | Thread-safe LRU response cache + embedding cache, toggled by `ENABLE_CACHE`. |
-| **Cost** | Token + USD estimates per request; aggregate counters in `/metrics`. |
-| **Eval** | Relevance / faithfulness / intent accuracy, JSONL dataset, CLI runner that writes per-case results. |
-| **Experiments** | Every run appends to `experiments/runs.jsonl` with `run_id`, params, metrics, versions. |
-| **Errors** | Stable taxonomy (`validation_error`, `auth_error`, `rate_limited`, `payload_too_large`, `timeout_error`, `internal_error`, `security_blocked`). |
-| **Resilience** | Retry/timeout helpers (`core/retry.py`), graceful fallback everywhere — the system never crashes. |
-| **API** | `/health`, `/version`, `/metrics`, `/query`, `/eval`. |
-| **CI** | GitHub Actions: install → test → eval → benchmark. |
+To address this, I designed a **Retrieval-Augmented Generation (RAG) platform** that:
+- Grounds responses using document retrieval
+- Routes queries intelligently (search / calculator / summarize)
+- Applies evaluation + retry logic to improve reliability
+
+This project represents my transition from **prompt-based LLM usage → system-level AI engineering**.
+
+---
+
+## 🚀 Core Capabilities
+
+- 📂 Document ingestion → chunking & indexing  
+- 🔍 Hybrid retrieval (BM25 + TF-IDF fallback)  
+- 🧠 Context-aware LLM responses (Ollama / OpenAI fallback)  
+- 🔀 Intelligent routing (search / calculator / summarize)  
+- 🛡️ Hallucination control via strict prompting  
+- 📊 Evaluation + retry pipeline  
+- ⚡ FastAPI backend + optional Streamlit UI  
+- 📦 Offline-safe execution  
+
+---
+
+## 🧠 My Contribution
+
+- Designed end-to-end RAG pipeline (retrieval → rerank → LLM → evaluation)  
+- Implemented hybrid search system (BM25 + TF-IDF)  
+- Built secure input pipeline (PII filtering + prompt injection guard)  
+- Added observability (latency, traces, cost tracking)  
+- Developed fallback LLM chain (OpenAI → Ollama → Local heuristic)  
+- Ensured system reliability with caching, retries, and error handling  
+
+---
+
+## 🏗️ Architecture (Simplified)
 
 
-## 🖥️ UI Demo
+Client
+↓
+FastAPI API Layer
+↓
+Pipeline
+├── Input Sanitization + Security Guard
+├── Cache Lookup
+├── Agent Router (search / calculator / summarize)
+├── RAG Retrieval (Hybrid Search)
+├── Optional Reranking
+├── LLM Generation
+└── Evaluation + Retry
+↓
+Response + Metrics + Trace
 
-A modern, ChatGPT-style interface for the AI Platform built with Streamlit.
-It calls the existing `/query` endpoint — **no backend changes required**.
 
-### Features
+---
 
-- 💬 **Chat interface** with persistent session history and clean message bubbles
-- ⌨️ **Streaming/typing effect** with animated typing indicator while waiting
-- 🎛️ **Sidebar controls**: `top_k` slider, offline-safe toggle, metadata toggle, clear chat
-- 📚 **Rich citations**: expandable cards with title, ID, and highlighted relevance score
-- 📊 **Metrics panel** per response: latency, cache hit/miss, provider, intent, trace ID
-- ⚠️ **Graceful error handling** — friendly messages for timeouts, connection errors, validation
-- 🟢 **Live backend health indicator** in the sidebar
-- 📋 **Copy answer** helper for quick sharing
-- 🎨 Wide layout, modern spacing, subtle iconography
+## 🛠️ Tech Stack
 
-### Run
+- **Backend:** FastAPI  
+- **UI:** Streamlit (optional)  
+- **Retrieval:** BM25 + TF-IDF  
+- **Vector / Search:** FAISS-style logic  
+- **LLM:** Ollama / OpenAI / Local fallback  
+- **Embeddings:** Sentence Transformers  
+- **Monitoring:** Custom metrics + tracing  
 
-1. Start the backend (in one terminal):
-   ```bash
-   uvicorn api.app:app --reload --port 8000
-   ```
+---
 
-2. Install Streamlit (one-time):
-   ```bash
-   pip install streamlit requests
-   ```
-
-3. Launch the UI:
-   ```bash
-   streamlit run ui/app.py
-   ```
-
-### Configuration
-
-| Env var                 | Default                  | Purpose                                   |
-|-------------------------|--------------------------|-------------------------------------------|
-| `AI_PLATFORM_API_URL`   | `http://localhost:8000`  | Backend base URL                          |
-| `AI_PLATFORM_API_KEY`   | *(empty)*                | Sent as `x-api-key` header if set         |
-
-### Example flow
-
-1. Type a question (e.g. *"What is the zero trust policy?"*) in the chat input
-2. See the typing indicator → streamed answer appears word-by-word
-3. Expand **📚 Citations** to inspect grounded sources and scores
-4. Expand **📊 Run details** for latency, provider, cache status, and trace ID
-5. Continue the conversation — full history is preserved in session state
-
-## 🗺️ Architecture
-
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full ASCII diagram. TL;DR:
-
-```
-client → FastAPI (TraceId·APIKey·SizeLimit·RateLimit·Timing)
-       → Pipeline (sanitize → guard → cache → route → calc | RAG → rerank? → LLM)
-       → Monitor + Experiment log
-```
-
-## 🚀 Run it
+## 🚀 Run Locally
 
 ```bash
 pip install -r requirements.txt
-
-# 1) Tests
-python -m pytest -q                  # 26 passing
-
-# 2) Demo (3 sample queries, offline)
+Start API
+uvicorn api.app:app --reload
+Run Demo
 python demo.py
-
-# 3) API
-python -m uvicorn api.app:app --reload
-#   POST /query     — main entry point
-#   GET  /health    — versions + feature flags
-#   GET  /version   — model/prompt/dataset versions
-#   GET  /metrics   — counters, latencies, tokens, cost, cache stats
-#   POST /eval      — run the eval suite over the API
-
-# 4) Evaluation
-python scripts/evaluate.py --cases data/eval_cases.jsonl
-
-# 5) Benchmark
-python scripts/benchmark.py --n 50
-
-# 6) Reindex a folder of docs
-python scripts/reindex.py ./data --query "zero trust"
-
-# 7) Optional UI
+Run Tests
+pytest -q
+Optional UI
 pip install streamlit
 streamlit run ui/streamlit_app.py
-```
-
-## 📡 API example
-
-```bash
-curl -s -X POST http://localhost:8000/query \
-  -H 'content-type: application/json' \
-  -H 'x-api-key: test-key' \
-  -d '{"query": "What is the zero trust policy?", "top_k": 3, "offline_safe": true}' | jq
-```
-
-Sample response (offline mode):
-
-```json
+📡 API Usage
+Query
+curl -X POST http://localhost:8000/query \
+-H "content-type: application/json" \
+-H "x-api-key: test-key" \
+-d '{"query": "What is zero trust?", "top_k": 3}'
+Example Response
 {
   "ok": true,
-  "answer": "Zero trust security policy requires continuous verification ...",
+  "answer": "Zero trust requires continuous verification...",
   "provider": "local_heuristic",
-  "citations": [
-    {"id": "sec-001", "title": "Zero Trust Security Policy", "score": 5.42}
-  ],
-  "route": {"intent": "search", "confidence": 0.5},
+  "route": {"intent": "search"},
   "meta": {
-    "model_version": "v1.0.0",
-    "prompt_version": "v1",
-    "dataset_version": "v1",
+    "latency_s": 0.002,
     "tokens": {"prompt": 0, "completion": 0},
-    "cost_usd": 0.0,
-    "latency_s": 0.0021,
-    "trace_id": "f4a1c0e9d8b7",
-    "latency_breakdown_ms": {
-      "sanitize": 0.04, "security_guard": 0.06, "cache_lookup": 0.01,
-      "route": 0.03, "retrieval": 0.71, "generation": 0.12, "total": 1.91
-    },
-    "request_id": "f4a1c0e9d8b7"
+    "trace_id": "abc123"
   }
 }
-```
-
-Calculator route:
-
-```bash
-curl -s -X POST http://localhost:8000/query \
-  -H 'content-type: application/json' -H 'x-api-key: test-key' \
-  -d '{"query": "Calculate 25% of 1800"}' | jq
-# → {"ok": true, "answer": "450", "provider": "calculator", ...}
-```
-
-Errors return a stable envelope (legacy `error` field preserved):
-
-```json
-{
-  "ok": false,
-  "error": "validation_error",
-  "details": [...],
-  "message": "validation_error",
-  "trace_id": "9b3a..."
-}
-```
-
-## 📊 Metrics & evaluation snapshot
-
-Sample eval summary on the bundled `data/eval_cases.jsonl` (5 cases,
-offline-safe):
-
-| Metric | Value |
-|---|---|
-| pass_rate | 1.0 |
-| avg_relevance | 0.18 |
-| avg_faithfulness | 0.31 |
-| intent_accuracy | 1.0 |
-| avg_latency_ms | ~2 ms |
-| p95_latency_ms | ~4 ms |
-
-Sample benchmark (`--n 50`, offline-safe): avg ≈ 1.5 ms / req, p95 ≈ 3 ms,
-success_rate = 1.0 on a single core.
-
-## 🔐 Security
-
-- **API key** required for `/query` and `/eval` (`x-api-key` header).
-- **Input sanitization**: control-char strip, whitespace normalize, length cap.
-- **PII**: email / SSN / credit-card (Luhn-verified) detection & redaction.
-- **Prompt injection**: heuristic patterns block obvious overrides
-  (e.g. "ignore previous instructions") and short-circuit the pipeline.
-- **Body size & rate limits** enforced as middleware.
-
-## 🧱 Project tree
-
-```
+🔐 Security Features
+API key authentication
+Input sanitization (length + control chars)
+PII detection (email, SSN, credit card)
+Prompt injection protection
+Rate limiting + request size limits
+📊 Evaluation & Metrics
+Relevance scoring
+Faithfulness tracking
+Intent accuracy
+Latency metrics (p50 / p95 / p99)
+Token + cost estimation
+📁 Project Structure
 ai-platform/
-├── api/                  # FastAPI app + middleware
-├── core/                 # Pipeline, RAG, LLM, eval, monitor, cache, errors,
-│                         # retry, tracing, prompts, ingest, schemas, config
-├── security/             # PII filter + injection guard
-├── data/                 # eval_cases.jsonl + sample.jsonl
-├── scripts/              # ingest, reindex, evaluate, run_eval, benchmark
-├── experiments/          # JSONL run logs (generated)
-├── tests/                # pytest suite (26 tests)
-├── ui/                   # Optional Streamlit dashboard
-├── demo.py               # 3-query demo
-├── ARCHITECTURE.md       # ASCII architecture diagram
-├── .env.example
-├── .github/workflows/ci.yml
+├── api/            # FastAPI app
+├── core/           # pipeline, rag, llm, evaluator, etc.
+├── security/       # guards and filters
+├── data/           # datasets
+├── scripts/        # ingestion, eval, benchmark
+├── tests/          # test cases
+├── ui/             # Streamlit UI
+├── experiments/    # run logs
+├── README.md
 └── requirements.txt
-```
+⚠️ Limitations
+In-memory retrieval (not optimized for large-scale data)
+No user authentication (API key only)
+Local heuristic fallback is not fully generative
+Designed as a portfolio + learning system, not enterprise deployment
+🎯 Key Outcome
 
-## ⚙️ Configuration
+Built a production-style AI system that moves beyond prompt engineering into:
 
-All settings come from env vars (or `.env`). See `.env.example` for the
-exhaustive list. Notable feature flags:
+reliable LLM outputs
+grounded responses
+system-level AI design
+🚀 Future Improvements
+Replace retrieval with FAISS / pgvector for scale
+Add authentication + multi-user support
+Deploy to cloud (Render / AWS / GCP)
+Integrate real LLM APIs for production
+💼 Author
 
-- `ENABLE_CACHE` (default `true`)
-- `ENABLE_EVAL` (default `true`)
-- `ENABLE_SECURITY_GUARD` (default `true`)
-- `ENABLE_RERANKER` (default `false`)
-- `DEBUG_MODE` (default `false`)
-
-## 🧪 Tests
-
-```bash
-python -m pytest -q
-# 26 passed
-```
-
-The suite covers retrieval, pipeline, agent routing, calculator safety,
-PII filter, and the API endpoint.
-
-## 📦 Limitations & future work
-
-- The bundled retriever is intentionally tiny and in-memory; for >100k
-  docs swap in FAISS / pgvector behind the same `HybridRAG` interface.
-- The cross-encoder reranker is optional and downloads a model on first
-  use; without it the lexical fallback is used so tests stay offline.
-- `LLMClient` ships HTTP clients for OpenAI and Ollama. The local
-  heuristic is deterministic but not generative — plug a real model in
-  by setting `OPENAI_API_KEY` or `OLLAMA_BASE_URL`.
-- Cost figures are estimates; for production accounting feed real usage
-  back into `metrics.add_cost` from your provider's billing webhook.
-- No persistent vector store, no auth beyond API keys, no per-tenant
-  isolation — these are intentional scope cuts for a portfolio system.
+AI Engineer (RAG + LLM Systems)
+Focused on building reliable, real-world AI systems beyond prompt engineering
