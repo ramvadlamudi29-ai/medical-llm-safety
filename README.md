@@ -30,6 +30,56 @@ fully offline.
 | **API** | `/health`, `/version`, `/metrics`, `/query`, `/eval`. |
 | **CI** | GitHub Actions: install → test → eval → benchmark. |
 
+
+## 🖥️ UI Demo
+
+A modern, ChatGPT-style interface for the AI Platform built with Streamlit.
+It calls the existing `/query` endpoint — **no backend changes required**.
+
+### Features
+
+- 💬 **Chat interface** with persistent session history and clean message bubbles
+- ⌨️ **Streaming/typing effect** with animated typing indicator while waiting
+- 🎛️ **Sidebar controls**: `top_k` slider, offline-safe toggle, metadata toggle, clear chat
+- 📚 **Rich citations**: expandable cards with title, ID, and highlighted relevance score
+- 📊 **Metrics panel** per response: latency, cache hit/miss, provider, intent, trace ID
+- ⚠️ **Graceful error handling** — friendly messages for timeouts, connection errors, validation
+- 🟢 **Live backend health indicator** in the sidebar
+- 📋 **Copy answer** helper for quick sharing
+- 🎨 Wide layout, modern spacing, subtle iconography
+
+### Run
+
+1. Start the backend (in one terminal):
+   ```bash
+   uvicorn api.app:app --reload --port 8000
+   ```
+
+2. Install Streamlit (one-time):
+   ```bash
+   pip install streamlit requests
+   ```
+
+3. Launch the UI:
+   ```bash
+   streamlit run ui/app.py
+   ```
+
+### Configuration
+
+| Env var                 | Default                  | Purpose                                   |
+|-------------------------|--------------------------|-------------------------------------------|
+| `AI_PLATFORM_API_URL`   | `http://localhost:8000`  | Backend base URL                          |
+| `AI_PLATFORM_API_KEY`   | *(empty)*                | Sent as `x-api-key` header if set         |
+
+### Example flow
+
+1. Type a question (e.g. *"What is the zero trust policy?"*) in the chat input
+2. See the typing indicator → streamed answer appears word-by-word
+3. Expand **📚 Citations** to inspect grounded sources and scores
+4. Expand **📊 Run details** for latency, provider, cache status, and trace ID
+5. Continue the conversation — full history is preserved in session state
+
 ## 🗺️ Architecture
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full ASCII diagram. TL;DR:
