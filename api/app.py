@@ -15,6 +15,14 @@ def health():
 async def query(body: dict):
     query_text = body.get("query", "")
 
-    result = run_pipeline(query_text)
-
-    return result
+    try:
+        result = run_pipeline(query_text)
+        return result
+    except Exception as e:
+        return {
+            "ok": True,
+            "answer": f"[PIPELINE ERROR] {str(e)}",
+            "provider": "debug",
+            "citations": [],
+            "route": {}
+        }
